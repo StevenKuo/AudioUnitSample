@@ -79,12 +79,13 @@ static OSStatus RenderCallback2(void *userData, AudioUnitRenderActionFlags *ioAc
         
         AudioStreamBasicDescription destFormat = LinearPCMStreamDescription();
         
-        status = AudioUnitSetProperty(outputAudioUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Input, 0, &destFormat, sizeof(destFormat));
-        status = AudioUnitSetProperty(outputAudioUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Output, 0, &destFormat, sizeof(destFormat));
-        
         status = AudioUnitSetProperty(mixAudioUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Input, 0, &destFormat, sizeof(destFormat));
         
         status = AudioUnitSetProperty(mixAudioUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Input, 1, &destFormat, sizeof(destFormat));
+        
+        status = AudioUnitSetProperty(mixAudioUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Output, 0, &destFormat, sizeof(destFormat));
+        
+        status = AudioUnitSetProperty(outputAudioUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Input, 0, &destFormat, sizeof(destFormat));
         
 //        status = AudioUnitSetParameter(mixAudioUnit, kMultiChannelMixerParam_Volume, kAudioUnitScope_Input, 0, 0.5, 0);
 //        status = AudioUnitSetParameter(mixAudioUnit, kMultiChannelMixerParam_Pan, kAudioUnitScope_Input, 0, 1, 1);

@@ -56,7 +56,6 @@ static OSStatus RenderCallback(void *userData, AudioUnitRenderActionFlags *ioAct
         AudioStreamBasicDescription destFormat = LinearPCMStreamDescription();
         
         status = AudioUnitSetProperty(audioUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Input, 0, &destFormat, sizeof(destFormat));
-        status = AudioUnitSetProperty(audioUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Output, 0, &destFormat, sizeof(destFormat));
         
         status = AudioUnitAddPropertyListener(audioUnit, kAudioOutputUnitProperty_IsRunning, MyAudioUnitPropertyListenerProc, (__bridge void *)(self));
         

@@ -74,21 +74,18 @@ static OSStatus RenderCallback2(void *userData, AudioUnitRenderActionFlags *ioAc
         status = AudioUnitSetProperty(remoteIOAudioUnit, kAudioOutputUnitProperty_EnableIO, kAudioUnitScope_Input, busOne, &oneFlag, sizeof(oneFlag));
         
         status = AudioUnitSetProperty(remoteIOAudioUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Input, 0, &destFormat, sizeof(destFormat));
-        status = AudioUnitSetProperty(remoteIOAudioUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Output, 0, &destFormat, sizeof(destFormat));
         
         status = AudioUnitSetProperty(remoteIOAudioUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Input, 1, &destFormat, sizeof(destFormat));
-        status = AudioUnitSetProperty(remoteIOAudioUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Output, 1, &destFormat, sizeof(destFormat));
-        
-        //		[self busCount];
-        //		UInt32 buscount = 2;
-        //		status = AudioUnitSetProperty(mixAudioUnit, kAudioUnitProperty_ElementCount, kAudioUnitScope_Input, 0, &buscount, sizeof (buscount));
         
         status = AudioUnitSetProperty(mixAudioUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Input, 0, &destFormat, sizeof(destFormat));
         
-        status = AudioUnitSetParameter(mixAudioUnit, kMultiChannelMixerParam_Volume, kAudioUnitScope_Input, 0, 0.3, 0);
-        
         status = AudioUnitSetProperty(mixAudioUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Output, 0, &destFormat, sizeof(destFormat));
         
+        status = AudioUnitSetProperty(mixAudioUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Input, 1, &destFormat, sizeof(destFormat));
+        
+        status = AudioUnitSetProperty(mixAudioUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Output, 1, &destFormat, sizeof(destFormat));
+        
+        status = AudioUnitSetParameter(mixAudioUnit, kMultiChannelMixerParam_Volume, kAudioUnitScope_Input, 0, 0.3, 0);
         
         
         status = AudioUnitAddPropertyListener(remoteIOAudioUnit, kAudioOutputUnitProperty_IsRunning, MyAudioUnitPropertyListenerProc, (__bridge void *)(self));
