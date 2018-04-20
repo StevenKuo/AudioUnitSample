@@ -26,8 +26,6 @@ typedef struct {
 {
 	__weak id <SKAudioBufferDelegate> delegate;
 	
-	NSUInteger availablePacketCount;
-	
 	AudioPacketInfo *packets;
 	size_t packetWriteIndex;
 	size_t packetReadIndex;
@@ -43,6 +41,7 @@ typedef struct {
 - (void)storePacketData:(const void * )inBytes dataLength:(UInt32)inLength packetDescriptions:(AudioStreamPacketDescription* )inPacketDescriptions packetsCount:(UInt32)inPacketsCount;
 - (void)movePacketReadIndex;
 
+@property (readonly, nonatomic) size_t availablePacketCount;
 @property (weak, nonatomic) id <SKAudioBufferDelegate> delegate;
 @property (readonly, nonatomic) AudioPacketInfo currentPacketInfo;
 @end

@@ -69,14 +69,14 @@
 			
 			packetWriteIndex++;
 			
-			availablePacketCount++;
+			_availablePacketCount++;
 		}
 	}
 }
 
 - (void)setPacketReadIndex:(size_t)inNewIndex
 {
-	size_t max = availablePacketCount;
+	size_t max = _availablePacketCount;
 	
 	if (inNewIndex > max) {
 		packetReadIndex = max;

@@ -13,7 +13,7 @@
 #import "SKAudioBuffer.h"
 #import "SKAudioConverter.h"
 
-@interface ViewController ()
+@interface ViewController ()<SKAudioParserDelegate, UITextFieldDelegate>
 {
     AUGraph audioGraph;
     AUNode node;
@@ -23,6 +23,8 @@
     SKAudioBuffer *buffer;
     
     SKAudioConverter *converter;
+    IBOutlet UITextField *textFeild;
+    IBOutlet UILabel *tip;
 }
 @end
 
@@ -41,7 +43,6 @@ static OSStatus RenderCallback(void *userData, AudioUnitRenderActionFlags *ioAct
         parser.delegate = self;
         
         buffer = [[SKAudioBuffer alloc] init];
-        buffer.delegate = self;
         
         OSStatus status = noErr;
         status = NewAUGraph(&audioGraph);
@@ -85,18 +86,32 @@ static OSStatus RenderCallback(void *userData, AudioUnitRenderActionFlags *ioAct
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    
+    OSStatus aError = AUGraphStart(audioGraph);
+    aError = AudioOutputUnitStart(audioUnit);
+}
+
+- (void)textFieldDidEndEditing:(UITextField *)textField {
     NSOperationQueue *operationQueue = [[NSOperationQueue alloc] init];
     NSURLSessionConfiguration *myConfiguration = [NSURLSessionConfiguration ephemeralSessionConfiguration];
     NSURLSession *operationSession = [NSURLSession sessionWithConfiguration:myConfiguration delegate:(id)self delegateQueue:operationQueue];
-    
-    NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:@"https://s3-us-west-2.amazonaws.com/666666bucket/0806d9c94785710f646501c0312b.mp3"]];
+
+    NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:textFeild.text]];
     NSURLSessionDataTask *task = [operationSession dataTaskWithRequest:request];
     [task resume];
 }
 
+- (BOOL)textFieldShouldReturn:(UITextField *)textField {
+    [textFeild resignFirstResponder];
+    [textFeild setEnabled:NO];
+    return YES;
+}
+
 - (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveResponse:(NSURLResponse *)response  completionHandler:(void (^)(NSURLSessionResponseDisposition disposition))completionHandler
 {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        tip.text = @"receiving data...";
+        tip.textColor = UIColor.blackColor;
+    });
     completionHandler(NSURLSessionResponseAllow);
 }
 
@@ -108,9 +123,14 @@ static OSStatus RenderCallback(void *userData, AudioUnitRenderActionFlags *ioAct
 - (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error
 {
     dispatch_async(dispatch_get_main_queue(), ^{
-        OSStatus aError = AUGraphStart(audioGraph);
-        aError = AudioOutputUnitStart(audioUnit);
-        NSLog(@"loading complete");
+        if (error) {
+            tip.textColor = UIColor.redColor;
+            tip.text = @"Fail";
+            textFeild.text = @"";
+            [textFeild setEnabled:YES];
+            return;
+        }
+        tip.text = @"";
     });
 }
 
@@ -136,6 +156,9 @@ static OSStatus RenderCallback(void *userData, AudioUnitRenderActionFlags *ioAct
 
 - (OSStatus)requestNumberOfFrames:(UInt32)inNumberOfFrames ioData:(AudioBufferList  *)inIoData busNumber:(UInt32)inBusNumber
 {
+    if (buffer.availablePacketCount < converter.packetsPerSecond * 4) {
+        return -1;
+    }
     OSStatus status = [converter requestNumberOfFrames:inNumberOfFrames ioData:inIoData busNumber:inBusNumber buffer:buffer];
     /* remove vocal
      UInt16 *data = inIoData->mBuffers[0].mData;

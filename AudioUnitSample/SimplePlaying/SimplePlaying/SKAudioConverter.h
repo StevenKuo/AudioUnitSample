@@ -25,5 +25,5 @@ AudioStreamBasicDescription LinearPCMStreamDescription();
 - (OSStatus)requestNumberOfFrames:(UInt32)inNumberOfFrames ioData:(AudioBufferList  *)inIoData busNumber:(UInt32)inBusNumber buffer:(SKAudioBuffer *)inBuffer;
 
 - (void)_fillBufferlist:(AudioBufferList *)ioData withBuffer:(SKAudioBuffer *)buffer packetDescription:(AudioStreamPacketDescription** )outDataPacketDescription;
-
+@property (readonly, nonatomic) double packetsPerSecond;
 @end

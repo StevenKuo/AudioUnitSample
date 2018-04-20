@@ -1,22 +1,67 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="6211" systemVersion="14A298i" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" initialViewController="BYZ-38-t0r">
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="14109" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
+    <device id="retina4_7" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="6204"/>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14088"/>
+        <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
         <!--View Controller-->
         <scene sceneID="tne-QT-ifu">
             <objects>
-                <viewController id="BYZ-38-t0r" customClass="ViewController" customModuleProvider="" sceneMemberID="viewController">
+                <viewController id="BYZ-38-t0r" customClass="ViewController" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="y3c-jy-aDJ"/>
                         <viewControllerLayoutGuide type="bottom" id="wfy-db-euE"/>
                     </layoutGuides>
-                    <view key="view" contentMode="scaleToFill" id="8bC-Xf-vdC">
-                        <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
+                    <view key="view" contentMode="scaleToFill" id="WN2-uJ-cjk">
+                        <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                        <subviews>
+                            <textField opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="ipQ-je-nYd">
+                                <rect key="frame" x="36" y="318" width="303" height="30"/>
+                                <nil key="textColor"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                <textInputTraits key="textInputTraits" enablesReturnKeyAutomatically="YES"/>
+                                <connections>
+                                    <outlet property="delegate" destination="BYZ-38-t0r" id="ij9-Wt-GcP"/>
+                                </connections>
+                            </textField>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Input the audio streaming URL likes https://xxx.mp3" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="2" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="8Mb-c3-e76">
+                                <rect key="frame" x="20" y="375" width="335" height="41"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <nil key="textColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="ZkC-ic-rbL">
+                                <rect key="frame" x="187" y="449" width="0.0" height="0.0"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <nil key="textColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                        </subviews>
+                        <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <constraints>
+                            <constraint firstAttribute="trailing" secondItem="8Mb-c3-e76" secondAttribute="trailing" constant="20" id="5T1-82-Qna"/>
+                            <constraint firstItem="ZkC-ic-rbL" firstAttribute="top" secondItem="8Mb-c3-e76" secondAttribute="bottom" constant="33" id="LDp-3b-RTx"/>
+                            <constraint firstItem="8Mb-c3-e76" firstAttribute="leading" secondItem="WN2-uJ-cjk" secondAttribute="leading" constant="20" id="OOa-oW-iZZ"/>
+                            <constraint firstItem="8Mb-c3-e76" firstAttribute="top" secondItem="ipQ-je-nYd" secondAttribute="bottom" constant="27" id="df8-ZP-6Fb"/>
+                            <constraint firstItem="ipQ-je-nYd" firstAttribute="leading" secondItem="WN2-uJ-cjk" secondAttribute="leadingMargin" constant="20" id="fiS-I2-U65"/>
+                            <constraint firstItem="8Mb-c3-e76" firstAttribute="centerX" secondItem="WN2-uJ-cjk" secondAttribute="centerX" id="h7g-Gp-RpV"/>
+                            <constraint firstItem="ipQ-je-nYd" firstAttribute="centerX" secondItem="WN2-uJ-cjk" secondAttribute="centerX" id="j4i-DI-Ike"/>
+                            <constraint firstItem="ipQ-je-nYd" firstAttribute="centerY" secondItem="WN2-uJ-cjk" secondAttribute="centerY" id="n5T-73-fbe"/>
+                            <constraint firstAttribute="trailingMargin" secondItem="ipQ-je-nYd" secondAttribute="trailing" constant="20" id="tVo-zS-V3g"/>
+                            <constraint firstItem="ZkC-ic-rbL" firstAttribute="centerX" secondItem="WN2-uJ-cjk" secondAttribute="centerX" id="ucz-Jw-V4a"/>
+                        </constraints>
                     </view>
+                    <connections>
+                        <outlet property="textFeild" destination="ipQ-je-nYd" id="EeS-mN-wbm"/>
+                        <outlet property="tip" destination="ZkC-ic-rbL" id="LKe-cK-4ad"/>
+                    </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
             </objects>

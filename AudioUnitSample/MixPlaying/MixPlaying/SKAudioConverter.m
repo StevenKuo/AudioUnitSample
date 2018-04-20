@@ -15,7 +15,7 @@ OSStatus AudioConverterFiller (AudioConverterRef inAudioConverter, UInt32* ioNum
     NSArray *args = (__bridge NSArray *)inUserData;
     SKAudioConverter *self = args[0];
     SKAudioBuffer *buffer = args[1];
-    //	*ioNumberDataPackets = 1;
+    //    *ioNumberDataPackets = 1;
     [self _fillBufferlist:ioData withBuffer:buffer packetDescription:outDataPacketDescription];
     return noErr;
 }
@@ -47,8 +47,7 @@ AudioStreamBasicDescription LinearPCMStreamDescription()
         destFormat = LinearPCMStreamDescription();
         AudioConverterNew(&audioStreamDescription, &destFormat, &converter);
         
-        UInt32 second = 1;
-        UInt32 packetSize = 44100 * second * 8;
+        UInt32 packetSize = 44100 * 4;
         renderBufferSize = packetSize;
         renderBufferList = (AudioBufferList *)calloc(1, sizeof(UInt32) + sizeof(AudioBuffer));
         renderBufferList->mNumberBuffers = 1;
@@ -63,13 +62,13 @@ AudioStreamBasicDescription LinearPCMStreamDescription()
 {
     static AudioStreamPacketDescription aspdesc;
     
-    //	ioData->mNumberBuffers = 1;
     AudioPacketInfo currentPacketInfo = buffer.currentPacketInfo;
     
     void *data = currentPacketInfo.data;
     UInt32 length = (UInt32)currentPacketInfo.packetDescription.mDataByteSize;
     ioData->mBuffers[0].mData = data;
     ioData->mBuffers[0].mDataByteSize = length;
+    ioData->mNumberBuffers = 1;
     
     *outDataPacketDescription = &aspdesc;
     aspdesc.mDataByteSize = length;
@@ -85,19 +84,24 @@ AudioStreamBasicDescription LinearPCMStreamDescription()
     NSArray *args = @[self, inBuffer];
     OSStatus status = noErr;
     
-    @synchronized(inBuffer) {
-        status = AudioConverterFillComplexBuffer(converter, AudioConverterFiller, (__bridge void *)(args), &packetSize, renderBufferList, NULL);
-    }
+    status = AudioConverterFillComplexBuffer(converter, AudioConverterFiller, (__bridge void *)(args), &packetSize, renderBufferList, NULL);
     
     if (noErr == status && packetSize) {
         inIoData->mNumberBuffers = 1;
         inIoData->mBuffers[0].mNumberChannels = 2;
         inIoData->mBuffers[0].mDataByteSize = renderBufferList->mBuffers[0].mDataByteSize;
         inIoData->mBuffers[0].mData = renderBufferList->mBuffers[0].mData;
-        //		renderBufferList->mBuffers[0].mDataByteSize = renderBufferSize;
         status = noErr;
     }
     return status;
+}
+
+- (double)packetsPerSecond
+{
+    if (!(audioStreamDescription.mFramesPerPacket > 0)) {
+        return 0;
+    }
+    return audioStreamDescription.mSampleRate / audioStreamDescription.mFramesPerPacket;
 }
 
 @end

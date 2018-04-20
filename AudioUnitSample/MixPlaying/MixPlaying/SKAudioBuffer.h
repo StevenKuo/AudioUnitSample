@@ -10,8 +10,8 @@
 #import <AudioToolbox/AudioToolbox.h>
 
 typedef struct {
-	AudioStreamPacketDescription packetDescription;
-	void *data;
+    AudioStreamPacketDescription packetDescription;
+    void *data;
 } AudioPacketInfo;
 
 @class SKAudioBuffer;
@@ -24,14 +24,12 @@ typedef struct {
 
 @interface SKAudioBuffer : NSObject
 {
-	__weak id <SKAudioBufferDelegate> delegate;
-	
-	NSUInteger availablePacketCount;
-	
-	AudioPacketInfo *packets;
-	size_t packetWriteIndex;
-	size_t packetReadIndex;
-	size_t packetCount;
+    __weak id <SKAudioBufferDelegate> delegate;
+    
+    AudioPacketInfo *packets;
+    size_t packetWriteIndex;
+    size_t packetReadIndex;
+    size_t packetCount;
     
     NSMutableData *audioData;
     NSMutableData *packetDescData;
@@ -43,6 +41,7 @@ typedef struct {
 - (void)storePacketData:(const void * )inBytes dataLength:(UInt32)inLength packetDescriptions:(AudioStreamPacketDescription* )inPacketDescriptions packetsCount:(UInt32)inPacketsCount;
 - (void)movePacketReadIndex;
 
+@property (readonly, nonatomic) size_t availablePacketCount;
 @property (weak, nonatomic) id <SKAudioBufferDelegate> delegate;
 @property (readonly, nonatomic) AudioPacketInfo currentPacketInfo;
 @end

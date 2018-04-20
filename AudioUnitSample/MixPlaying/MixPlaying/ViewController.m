@@ -13,7 +13,7 @@
 #import "SKAudioBuffer.h"
 #import "SKAudioConverter.h"
 
-@interface ViewController ()
+@interface ViewController ()<SKAudioParserDelegate>
 {
     AUGraph audioGraph;
     AUNode mixNode;
@@ -33,6 +33,9 @@
     NSURLSessionDataTask *task2;
     
     BOOL firstComplete;
+    IBOutlet UITextField *textFeild;
+    IBOutlet UITextField *textFeild2;
+    IBOutlet UILabel *tip;
 }
 
 @end
@@ -55,10 +58,10 @@ static OSStatus RenderCallback2(void *userData, AudioUnitRenderActionFlags *ioAc
         parser2.delegate = self;
         
         buffer = [[SKAudioBuffer alloc] init];
-        buffer.delegate = self;
+        
         
         buffer2 = [[SKAudioBuffer alloc] init];
-        buffer2.delegate = self;
+        
         
         OSStatus status = noErr;
         status = NewAUGraph(&audioGraph);
@@ -134,20 +137,30 @@ static OSStatus RenderCallback2(void *userData, AudioUnitRenderActionFlags *ioAc
     return mixerUnitDescription;
 }
 
-- (void)viewDidLoad {
-    [super viewDidLoad];
-    
-    NSOperationQueue *operationQueue = [[NSOperationQueue alloc] init];
-    NSURLSessionConfiguration *myConfiguration = [NSURLSessionConfiguration ephemeralSessionConfiguration];
-    NSURLSession *operationSession = [NSURLSession sessionWithConfiguration:myConfiguration delegate:(id)self delegateQueue:operationQueue];
-    
-    NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:@"https://s3-us-west-2.amazonaws.com/666666bucket/0806d9c94785710f646501c0312b.mp3"]];
-    task1 = [operationSession dataTaskWithRequest:request];
-    [task1 resume];
-    
-    NSURLRequest *request2 = [NSURLRequest requestWithURL:[NSURL URLWithString:@"https://s3-us-west-2.amazonaws.com/666666bucket/ece985aece828873749cf0e0d699.mp3"]];
-    task2 = [operationSession dataTaskWithRequest:request2];
-    [task2 resume];
+
+- (BOOL)textFieldShouldReturn:(UITextField *)textField {
+    [textField resignFirstResponder];
+    [textField setEnabled:NO];
+    return YES;
+}
+
+- (void)textFieldDidEndEditing:(UITextField *)textField {
+    [textField resignFirstResponder];
+    [textField setEnabled:NO];
+    if (textFeild.text.length != 0 && textFeild2.text.length != 0) {
+        NSOperationQueue *operationQueue = [[NSOperationQueue alloc] init];
+        NSURLSessionConfiguration *myConfiguration = [NSURLSessionConfiguration ephemeralSessionConfiguration];
+        NSURLSession *operationSession = [NSURLSession sessionWithConfiguration:myConfiguration delegate:(id)self delegateQueue:operationQueue];
+        
+        NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:textFeild.text]];
+        task1 = [operationSession dataTaskWithRequest:request];
+        [task1 resume];
+        
+        NSURLRequest *request2 = [NSURLRequest requestWithURL:[NSURL URLWithString:textFeild2.text]];
+        task2 = [operationSession dataTaskWithRequest:request2];
+        [task2 resume];
+    }
+
 }
 
 - (BOOL)_outputNodePlaying
@@ -165,23 +178,35 @@ static OSStatus RenderCallback2(void *userData, AudioUnitRenderActionFlags *ioAc
 
 - (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveData:(NSData *)data
 {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        tip.text = @"receiving data...";
+        tip.textColor = UIColor.blackColor;
+        firstComplete = YES;
+    });
     if ([dataTask isEqual:task1]) {
         [parser parseData:data];
     }
     else if ([dataTask isEqual:task2]) {
+        if (![self _outputNodePlaying] && firstComplete) {
+            OSStatus aError = AUGraphStart(audioGraph);
+            aError = AudioOutputUnitStart(outputAudioUnit);
+        }
         [parser2 parseData:data];
     }
 }
 
 - (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error
 {
-    if (![self _outputNodePlaying] && firstComplete) {
-        OSStatus aError = AUGraphStart(audioGraph);
-        aError = AudioOutputUnitStart(outputAudioUnit);
-    }
-    firstComplete = YES;
-    
-    NSLog(@"loading complete");
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (error) {
+            tip.textColor = UIColor.redColor;
+            tip.text = @"Fail";
+            textFeild.text = @"";
+            [textFeild setEnabled:YES];
+            return;
+        }
+        tip.text = @"";
+    });
 }
 
 - (void)audioStreamParser:(SKAudioParser *)inParser didObtainStreamDescription:(AudioStreamBasicDescription *)inDescription
@@ -215,11 +240,17 @@ static OSStatus RenderCallback2(void *userData, AudioUnitRenderActionFlags *ioAc
 
 - (OSStatus)requestNumberOfFrames:(UInt32)inNumberOfFrames ioData:(AudioBufferList  *)inIoData busNumber:(UInt32)inBusNumber
 {
+    if (buffer.availablePacketCount < converter.packetsPerSecond * 4) {
+        return -1;
+    }
     return [converter requestNumberOfFrames:inNumberOfFrames ioData:inIoData busNumber:inBusNumber buffer:buffer];
 }
 
 - (OSStatus)requestNumberOfFrames2:(UInt32)inNumberOfFrames ioData:(AudioBufferList  *)inIoData busNumber:(UInt32)inBusNumber
 {
+    if (buffer2.availablePacketCount < converter2.packetsPerSecond * 4) {
+        return -1;
+    }
     return [converter2 requestNumberOfFrames:inNumberOfFrames ioData:inIoData busNumber:inBusNumber buffer:buffer2];
 }
 

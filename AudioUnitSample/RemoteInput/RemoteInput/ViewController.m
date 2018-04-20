@@ -14,7 +14,7 @@
 #import "SKAudioBuffer.h"
 #import "SKAudioConverter.h"
 
-@interface ViewController ()
+@interface ViewController ()<SKAudioParserDelegate>
 {
     AUGraph audioGraph;
     AUNode mixNode;
@@ -26,6 +26,8 @@
     SKAudioBuffer *buffer;
     
     SKAudioConverter *converter;
+    IBOutlet UITextField *textFeild;
+    IBOutlet UILabel *tip;
 }
 - (OSStatus)requestNumberOfFrames:(UInt32)inNumberOfFrames ioData:(AudioBufferList  *)inIoData busNumber:(UInt32)inBusNumber;
 @end
@@ -34,7 +36,6 @@
 static void MyAudioUnitPropertyListenerProc(void *inRefCon, AudioUnit inUnit, AudioUnitPropertyID	inID, AudioUnitScope inScope,AudioUnitElement inElement);
 
 static OSStatus RenderCallback(void *userData, AudioUnitRenderActionFlags *ioActionFlags, const AudioTimeStamp *inTimeStamp, UInt32 inBusNumber, UInt32 inNumberFrames, AudioBufferList *ioData);
-static OSStatus RenderCallback2(void *userData, AudioUnitRenderActionFlags *ioActionFlags, const AudioTimeStamp *inTimeStamp, UInt32 inBusNumber, UInt32 inNumberFrames, AudioBufferList *ioData);
 
 @implementation ViewController
 
@@ -47,7 +48,6 @@ static OSStatus RenderCallback2(void *userData, AudioUnitRenderActionFlags *ioAc
         parser.delegate = self;
         
         buffer = [[SKAudioBuffer alloc] init];
-        buffer.delegate = self;
         
         OSStatus status = noErr;
         status = NewAUGraph(&audioGraph);
@@ -66,6 +66,7 @@ static OSStatus RenderCallback2(void *userData, AudioUnitRenderActionFlags *ioAc
         
         status = AUGraphConnectNodeInput(audioGraph, mixNode, 0, remoteIONode, 0);
         status = AUGraphConnectNodeInput(audioGraph, remoteIONode, 1, mixNode, 1);
+        status = AUGraphConnectNodeInput(audioGraph, mixNode, 1, remoteIONode, 0);
         
         AudioStreamBasicDescription destFormat = LinearPCMStreamDescription();
         
@@ -73,23 +74,22 @@ static OSStatus RenderCallback2(void *userData, AudioUnitRenderActionFlags *ioAc
         UInt32 busOne = 1;
         status = AudioUnitSetProperty(remoteIOAudioUnit, kAudioOutputUnitProperty_EnableIO, kAudioUnitScope_Input, busOne, &oneFlag, sizeof(oneFlag));
         
-        status = AudioUnitSetProperty(remoteIOAudioUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Input, 0, &destFormat, sizeof(destFormat));
         
-        status = AudioUnitSetProperty(remoteIOAudioUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Input, 1, &destFormat, sizeof(destFormat));
+        status = AudioUnitSetProperty(remoteIOAudioUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Input, 0, &destFormat, sizeof(destFormat));
+
+        status = AudioUnitSetProperty(remoteIOAudioUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Output, 1, &destFormat, sizeof(destFormat));
         
         status = AudioUnitSetProperty(mixAudioUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Input, 0, &destFormat, sizeof(destFormat));
-        
-        status = AudioUnitSetProperty(mixAudioUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Output, 0, &destFormat, sizeof(destFormat));
-        
+
         status = AudioUnitSetProperty(mixAudioUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Input, 1, &destFormat, sizeof(destFormat));
         
-        status = AudioUnitSetProperty(mixAudioUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Output, 1, &destFormat, sizeof(destFormat));
-        
+
+
         status = AudioUnitSetParameter(mixAudioUnit, kMultiChannelMixerParam_Volume, kAudioUnitScope_Input, 0, 0.3, 0);
         
         
         status = AudioUnitAddPropertyListener(remoteIOAudioUnit, kAudioOutputUnitProperty_IsRunning, MyAudioUnitPropertyListenerProc, (__bridge void *)(self));
-        
+
         AURenderCallbackStruct callbackStruct;
         callbackStruct.inputProcRefCon = (__bridge void *)(self);
         callbackStruct.inputProc = RenderCallback;
@@ -131,18 +131,20 @@ static OSStatus RenderCallback2(void *userData, AudioUnitRenderActionFlags *ioAc
     [super viewDidLoad];
     OSStatus aError = AUGraphStart(audioGraph);
     aError = AudioOutputUnitStart(remoteIOAudioUnit);
-    
-    NSOperationQueue *operationQueue = [[NSOperationQueue alloc] init];
-    NSURLSessionConfiguration *myConfiguration = [NSURLSessionConfiguration ephemeralSessionConfiguration];
-    NSURLSession *operationSession = [NSURLSession sessionWithConfiguration:myConfiguration delegate:(id)self delegateQueue:operationQueue];
-    
-    NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:@"https://s3-us-west-2.amazonaws.com/666666bucket/ece985aece828873749cf0e0d699.mp3"]];
-    NSURLSessionTask *task = [operationSession dataTaskWithRequest:request];
-    [task resume];
+}
+
+- (BOOL)textFieldShouldReturn:(UITextField *)textField {
+    [textFeild resignFirstResponder];
+    [textFeild setEnabled:NO];
+    return YES;
 }
 
 - (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveResponse:(NSURLResponse *)response  completionHandler:(void (^)(NSURLSessionResponseDisposition disposition))completionHandler
 {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        tip.text = @"receiving data...";
+        tip.textColor = UIColor.blackColor;
+    });
     completionHandler(NSURLSessionResponseAllow);
 }
 
@@ -153,10 +155,26 @@ static OSStatus RenderCallback2(void *userData, AudioUnitRenderActionFlags *ioAc
 
 - (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error
 {
-    OSStatus aError = AUGraphStart(audioGraph);
-    aError = AudioOutputUnitStart(remoteIOAudioUnit);
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (error) {
+            tip.textColor = UIColor.redColor;
+            tip.text = @"Fail";
+            textFeild.text = @"";
+            [textFeild setEnabled:YES];
+            return;
+        }
+        tip.text = @"";
+    });
+}
+
+- (void)textFieldDidEndEditing:(UITextField *)textField {
+    NSOperationQueue *operationQueue = [[NSOperationQueue alloc] init];
+    NSURLSessionConfiguration *myConfiguration = [NSURLSessionConfiguration ephemeralSessionConfiguration];
+    NSURLSession *operationSession = [NSURLSession sessionWithConfiguration:myConfiguration delegate:(id)self delegateQueue:operationQueue];
     
-    NSLog(@"loading complete");
+    NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:textFeild.text]];
+    NSURLSessionDataTask *task = [operationSession dataTaskWithRequest:request];
+    [task resume];
 }
 
 
@@ -181,6 +199,9 @@ static OSStatus RenderCallback2(void *userData, AudioUnitRenderActionFlags *ioAc
 
 - (OSStatus)requestNumberOfFrames:(UInt32)inNumberOfFrames ioData:(AudioBufferList  *)inIoData busNumber:(UInt32)inBusNumber
 {
+    if (buffer.availablePacketCount < converter.packetsPerSecond * 4) {
+        return -1;
+    }
     return [converter requestNumberOfFrames:inNumberOfFrames ioData:inIoData busNumber:inBusNumber buffer:buffer];
 }
 
